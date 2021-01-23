@@ -12,9 +12,10 @@ One map for the Buy orders, that will keep the items ordered by price in descend
 One map for the Sell orders, that will keep the items ordered by price in ascending order;
 The third is a hash table, where we store all the orders id (as long as there is some size left on mkt) and the corresponding price and Side
 We can look up the order by id in the hash table (constant time access), and given the price of that order we can go into the Buy or Sell Maps 
-and look for the price in that map (time complexity O(logn)). 
+and look for the price in that map (time complexity O(logn)). Once we have found the price, given that we might have multipl orders with the same price,
+we keep a further hash map that will distinguish the orders by id. 
 
-When an order needs to be reduces, we lookup the id in the hash table, then find the corresponding item in the appropriate map, and finally we reduce the size.
+When an order needs to be reduced, we look up the id in the hash table, then find the corresponding item in the appropriate map, and finally we reduce the size.
 If the size becomes 0, then we remove the information about that order id from both data structures.
 
 The input of this program is a file, and the file name is specified in the main itself, together with the target.
