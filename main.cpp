@@ -16,6 +16,9 @@ and look for the price in that map (time complexity O(logn)).
 
 When an order needs to be reduces, we lookup the id in the hash table, then find the corresponding item in the appropriate map, and finally we reduce the size.
 If the size becomes 0, then we remove the information about that order id from both data structures.
+
+The input of this program is a file, and the file name is specified in the main itself, together with the target.
+The output of this program is simply printed to stdout.
 */
 
 enum Side {
