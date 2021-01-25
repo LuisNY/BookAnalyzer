@@ -7,18 +7,29 @@
 #include <iomanip>
 
 /*
-This implementation keeps 3 separate data structures. 
-One map for the Buy orders, that will keep the items ordered by price in descending order;
-One map for the Sell orders, that will keep the items ordered by price in ascending order;
-The third is a hash table, where we store all the orders id (as long as there is some size left on mkt) and the corresponding price and Side
-We can look up the order by id in the hash table (constant time access), and given the price of that order we can go into the Buy or Sell Maps 
-and look for the price in that map (time complexity O(logn)). Once we have found the price, given that we might have multipl orders with the same price,
-we keep a further hash map that will distinguish the orders by id. 
+This implementation keeps 3 separate data structures of 2 different types. 
 
-When an order needs to be reduced, we look up the id in the hash table, then find the corresponding item in the appropriate map, and finally we reduce the size.
+1)
+map <price : un_map <id : size> >
+Each map key is the price. Each map value is an unordered map (hash table) where the key is the id of the order and the value is the size.
+
+We have one map for the Buy orders, that will keep the items ordered by price in descending order;
+one map for the Sell orders, that will keep the items ordered by price in ascending order;
+
+This way iterating through the maps we will find always the highest/lowest prices that will be used for expenses/income computation.
+
+2) 
+map <id : <side, price> >
+The second data structure is an unordered_map where the key is the order id and the value is a pair (side of order, price)
+This map will keep orders in memory as long as there is a corresponding size on mkt for a given order id.
+
+We can look up the order by id in the hash table (constant time access), and given the price of that order we can go into the Buy or Sell Maps 
+and look for the price in that map (time complexity O(logn)).
+
+When an order needs to be reduced, we look up the id in the hash table, then find the corresponding price in the appropriate map, and finally we reduce the size.
 If the size becomes 0, then we remove the information about that order id from both data structures.
 
-The input of this program is a file, and the file name is specified in the main itself, together with the target.
+The input of this program is a file, and the file name is specified in the main itself, as well as the target.
 The output of this program is simply printed to stdout.
 */
 
@@ -72,9 +83,9 @@ public:
     void handleNewOrder(const std::string& id, const Side side, const int size, const double price, const long timestamp) 
     {
         if(side == Side::BUY)
-            this->handleNewBuyOrder(size, price, id, timestamp);
+            handleNewBuyOrder(size, price, id, timestamp);
         else if (side == Side::SELL)
-            this->handleNewSellOrder(size, price, id, timestamp);
+            handleNewSellOrder(size, price, id, timestamp);
 
         hashTable_.insert(std::make_pair(id, std::make_pair(side, price))); //add id to hashmap if it doesn't exist
     }
@@ -147,11 +158,11 @@ private:
 
         while(currSize<target_ && it!=buyMap_.end())
         {
-            this->searchInnerMap(it->second, it->first, timestamp, prevIncome_, income, currSize);
+            searchInnerMap(it->second, it->first, timestamp, prevIncome_, income, currSize);
             ++it;
         }
 
-        this->print(income, prevExpenses_, prevNanExp_, timestamp, Side::BUY);
+        print(income, prevExpenses_, prevNanExp_, timestamp, Side::BUY);
     }
 
     void printSell(long timestamp)
@@ -162,11 +173,11 @@ private:
 
         while(currSize<target_ && it!=sellMap_.end())
         {
-            this->searchInnerMap(it->second, it->first, timestamp, prevExpenses_, expenses, currSize);
+            searchInnerMap(it->second, it->first, timestamp, prevExpenses_, expenses, currSize);
             ++it;
         }
 
-        this->print(expenses, prevIncome_, prevNanIncome_, timestamp, Side::SELL);
+        print(expenses, prevIncome_, prevNanIncome_, timestamp, Side::SELL);
     }
     
     void handleNewBuyOrder(const int size, const double price, const std::string id, const long timestamp)
@@ -180,7 +191,7 @@ private:
             buyMap_.emplace(std::make_pair(price, createNewInnerMap(id, size)));
 
         if (target_<=totBuySize_)
-            this->printBuy(timestamp);
+            printBuy(timestamp);
     }
 
     void handleNewSellOrder(const int size, const double price, const std::string id, long timestamp)
@@ -194,7 +205,7 @@ private:
             sellMap_.emplace(std::make_pair(price, this->createNewInnerMap(id, size)));
 
         if (target_<=totSellSize_)
-            this->printSell(timestamp);
+            printSell(timestamp);
     }
 
     bool searchId(std::unordered_map<std::string, int>& innerMap, const std::string& id, const int size, bool& removeFromMemory, int& totSize, const Side side)
@@ -225,12 +236,12 @@ private:
 
         if(iter != buyMap_.end())
         {
-            if (this->searchId(iter->second, hashElem->first, size, removeFromMemory, totBuySize_, Side::BUY)) // look for the order to reduce by id
+            if (searchId(iter->second, hashElem->first, size, removeFromMemory, totBuySize_, Side::BUY)) // look for the order to reduce by id
             {
                 if (target_ <= totBuySize_)
-                    this->printBuy(timestamp);
+                    printBuy(timestamp);
                 else if (target_ > totBuySize_ && prevNanExp_ == false)
-                    this->printNA(timestamp, prevNanExp_, Side::BUY);
+                    printNA(timestamp, prevNanExp_, Side::BUY);
             }
         }
 
@@ -244,12 +255,12 @@ private:
 
         if(iter != sellMap_.end())
         {
-            if (this->searchId(iter->second, hashElem->first, size, removeFromMemory, totSellSize_, Side::SELL))
+            if (searchId(iter->second, hashElem->first, size, removeFromMemory, totSellSize_, Side::SELL))
             {
                 if (target_<= totSellSize_)
-                    this->printSell(timestamp);
+                    printSell(timestamp);
                 else if (target_ > totSellSize_ && prevNanIncome_ == false)
-                    this->printNA(timestamp, prevNanIncome_, Side::SELL);
+                    printNA(timestamp, prevNanIncome_, Side::SELL);
             }
         }
 
