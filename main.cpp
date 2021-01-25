@@ -31,6 +31,23 @@ If the size becomes 0, then we remove the information about that order id from b
 
 The input of this program is a file, and the file name is specified in the main itself, as well as the target.
 The output of this program is simply printed to stdout.
+
+
+This implementation focuses on speed rather than space. Space complextity will be O(n) 
+since we have to store in memory all orders as long as there is a size>0 on market. 
+The bigger the target the bigger the memory space we will use.
+
+On the other end, the time complexity to remove order is reduced to:
+O(1) (hash table id look-up) + 
+O(log(n)) (buy/sell maps price look-up) + 
+O(1) (most cases, worst case O(m) when we need to iterate through all orders (m) with same price)
+
+
+Time complexity to add new order:
+O(log(n)) to insert new item in buy/sell maps +
+O(1) insert element in hash table +
+O(1) time to compute new income/expenses (worst case O(n*m) (potentially you need to go through all itemns in the buy/sell map))
+
 */
 
 enum Side {
@@ -275,7 +292,7 @@ int main()
     int target = 200;
     BookAnalyzer bookAnalyzer = BookAnalyzer(target);
 
-    std::ifstream infile("input.in");
+    std::ifstream infile("book_analyzer.in");
 
     long timestamp;
     char type;
