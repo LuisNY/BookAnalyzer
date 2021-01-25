@@ -48,6 +48,9 @@ O(log(n)) to insert new item in buy/sell maps +
 O(1) insert element in hash table +
 O(1) time to compute new income/expenses (worst case O(n*m) (potentially you need to go through all itemns in the buy/sell map))
 
+
+Downside of this solution is that it maintains 2 parallel maps (buy and sell) 
+which causes parallel code because the maps have different comparators and are not of the same 'type'
 */
 
 enum Side {
@@ -272,7 +275,7 @@ private:
 
         if(iter != sellMap_.end())
         {
-            if (searchId(iter->second, hashElem->first, size, removeFromMemory, totSellSize_, Side::SELL))
+            if (searchId(iter->second, hashElem->first, size, removeFromMemory, totSellSize_, Side::SELL)) // look for the order to reduce by id
             {
                 if (target_<= totSellSize_)
                     printSell(timestamp);
